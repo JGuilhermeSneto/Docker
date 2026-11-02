@@ -24,12 +24,46 @@ cd Docker
 
 1. **Docker Desktop Aberto:**
    - Abra o **Docker Desktop** no Windows e certifique-se de que a luzinha no canto inferior esquerdo está **verde** (🟢 *Engine running*).
-2. **WSL 2 Ativo (Apenas se estiver em outra máquina Windows nova):**
-   - Caso use outra máquina Windows que nunca rodou Docker antes, abra o PowerShell como Administrador e execute:
-     ```powershell
-     wsl --install --no-distribution
-     ```
-     *(E reinicie o computador se solicitado).*
+2. **WSL 2 Ativo:**
+   - O motor de contêineres Linux do Docker no Windows utiliza o WSL 2.
+
+---
+
+## 🛠️ Como Instalar e Configurar o Docker do Zero via PowerShell (Caso Necessário)
+
+Se você, seu grupo ou o professor precisarem preparar uma **máquina Windows nova** para o seminário que ainda não tenha o Docker configurado, siga este passo a passo 100% via terminal PowerShell:
+
+### 1️⃣ Instalar o Docker Desktop automaticamente (sem precisar baixar pelo navegador)
+Abra o **PowerShell como Administrador** (`Executar como Administrador`) e cole:
+```powershell
+winget install -e --id Docker.DockerDesktop --accept-source-agreements --accept-package-agreements
+```
+> O Windows baixará os pacotes oficiais e instalará o Docker Desktop silenciosamente com êxito.
+
+### 2️⃣ Ativar o Subsistema Windows para Linux (WSL 2)
+No mesmo PowerShell como Administrador, execute:
+```powershell
+wsl --install --no-distribution
+```
+
+### 3️⃣ Atualizar o Kernel do WSL para a versão mais recente
+```powershell
+wsl --update
+```
+
+### 4️⃣ Reiniciar o computador
+Se o Windows solicitar reinicialização para ativar os componentes de virtualização, **reinicie a máquina**.
+
+### 5️⃣ Inicializar o Docker Desktop e Testar
+1. Abra o **Docker Desktop** pelo Menu Iniciar (ou pelo PowerShell: `Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"`).
+2. Na tela de boas-vindas inicial, clique em **Accept** (Termos) e depois em **Continue without signing in** ou **Skip** (não precisa criar conta).
+3. Aguarde cerca de 1 minuto até o ícone da baleia no canto inferior esquerdo ficar **verde** (🟢 *Engine running*).
+4. Abra um novo terminal e confirme que o Docker está pronto:
+   ```bash
+   docker version
+   docker info
+   ```
+*(Se ambos os comandos exibirem as informações de Client e Server Linux WSL2, o ambiente está perfeito para rodar o projeto!)*
 
 ---
 
