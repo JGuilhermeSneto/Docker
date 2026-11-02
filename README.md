@@ -2,6 +2,9 @@
 
 Projeto desenvolvido para a disciplina de **Desenvolvimento Web para Nuvem**, demonstrando a criação de um backend em **Django**, frontend moderno com **Tailwind CSS**, conteinerização com **Docker** e fundamentação teórica completa exigida pelo professor.
 
+* 🔗 **Repositório GitHub:** [https://github.com/JGuilhermeSneto/Docker.git](https://github.com/JGuilhermeSneto/Docker.git)
+* 🚀 **Guia Rápido de Execução & Seminário:** [**`COMO_EXECUTAR.md`**](COMO_EXECUTAR.md)
+
 ---
 
 ## 📋 Sumário
