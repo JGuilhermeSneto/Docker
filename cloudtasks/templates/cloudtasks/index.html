@@ -1,0 +1,341 @@
+{% extends 'cloudtasks/base.html' %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Container Diagnostic & Cloud Header -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800/90 via-slate-800/50 to-slate-900 border border-slate-700/80 p-6 sm:p-8 shadow-2xl">
+        <!-- Background Glow Accent -->
+        <div class="absolute -right-20 -top-20 w-64 h-64 bg-docker-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 relative z-10">
+            <div>
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-3
+                    {% if system_info.is_docker %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/30
+                    {% else %}bg-amber-500/10 text-amber-400 border border-amber-500/30{% endif %}">
+                    <span class="w-1.5 h-1.5 rounded-full {% if system_info.is_docker %}bg-emerald-400 animate-pulse{% else %}bg-amber-400{% endif %}"></span>
+                    {% if system_info.is_docker %}Executando em Contêiner Docker Isolado{% else %}Executando no Host Local{% endif %}
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+                    Painel de Controle em Nuvem
+                </h1>
+                <p class="text-slate-400 mt-2 max-w-2xl text-sm sm:text-base">
+                    Aplicação backend Django desenvolvida para demonstrar isolamento de processos, portabilidade em contêineres Docker e orquestração para nuvem.
+                </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap items-center gap-3">
+                <button onclick="document.getElementById('taskModal').classList.remove('hidden')" class="inline-flex items-center gap-2 bg-gradient-to-r from-docker-600 to-cyan-500 hover:from-docker-500 hover:to-cyan-400 text-white font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-docker-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    Nova Tarefa
+                </button>
+                <button onclick="fetchSystemApi()" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium px-4 py-2.5 rounded-xl transition-all text-sm">
+                    <svg class="w-4 h-4 text-docker-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                    Testar API JSON
+                </button>
+            </div>
+        </div>
+
+        <!-- Live Container Telemetry Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mt-6 pt-6 border-t border-slate-700/60 text-xs">
+            <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                <span class="text-slate-400 block mb-1">Hostname / Container ID</span>
+                <span class="font-mono font-bold text-docker-300 text-sm truncate block" title="{{ system_info.hostname }}">
+                    {{ system_info.hostname }}
+                </span>
+            </div>
+
+            <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                <span class="text-slate-400 block mb-1">IP Interno</span>
+                <span class="font-mono font-semibold text-slate-200 text-sm">
+                    {{ system_info.internal_ip }}
+                </span>
+            </div>
+
+            <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                <span class="text-slate-400 block mb-1">Sistema Operacional</span>
+                <span class="font-semibold text-slate-200 truncate block" title="{{ system_info.os_name }}">
+                    {{ system_info.os_name }}
+                </span>
+            </div>
+
+            <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                <span class="text-slate-400 block mb-1">Versão Python</span>
+                <span class="font-mono font-semibold text-emerald-400 text-sm">
+                    v{{ system_info.python_version }}
+                </span>
+            </div>
+
+            <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                <span class="text-slate-400 block mb-1">Ambiente Nuvem</span>
+                <span class="font-semibold text-amber-400 text-sm">
+                    {{ system_info.app_env }}
+                </span>
+            </div>
+
+            <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                <span class="text-slate-400 block mb-1">Uptime Contêiner</span>
+                <span class="font-mono font-semibold text-slate-200 text-sm">
+                    {{ system_info.uptime }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Modal / Dropdown Inspector (hidden by default) -->
+    <div id="apiResponseBox" class="hidden rounded-xl bg-slate-950 border border-docker-500/30 p-4 transition-all animate-fade-in">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-mono text-docker-400 font-semibold flex items-center gap-2">
+                <span>GET /api/system-info/</span>
+                <span class="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded">200 OK</span>
+            </span>
+            <button onclick="document.getElementById('apiResponseBox').classList.add('hidden')" class="text-slate-400 hover:text-white text-xs">&times; Fechar</button>
+        </div>
+        <pre id="apiJsonDisplay" class="text-xs font-mono text-emerald-300 bg-slate-900 p-3 rounded-lg overflow-x-auto"></pre>
+    </div>
+
+    <!-- Metrics Row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-slate-400 font-medium">Total de Tarefas</p>
+                <p class="text-2xl font-bold text-white mt-1">{{ total_tasks }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-slate-700/50 flex items-center justify-center text-slate-300 text-lg">
+                📋
+            </div>
+        </div>
+
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-slate-400 font-medium">Pendentes</p>
+                <p class="text-2xl font-bold text-amber-400 mt-1">{{ pending_tasks }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-lg">
+                ⏳
+            </div>
+        </div>
+
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-slate-400 font-medium">Em Andamento</p>
+                <p class="text-2xl font-bold text-sky-400 mt-1">{{ in_progress_tasks }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 text-lg">
+                ⚡
+            </div>
+        </div>
+
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-slate-400 font-medium">Concluídas</p>
+                <p class="text-2xl font-bold text-emerald-400 mt-1">{{ completed_tasks }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-lg">
+                ✅
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Search Toolbar -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-800/40 border border-slate-700/60 p-4 rounded-xl">
+        <!-- Status Filter Tabs -->
+        <div class="flex flex-wrap items-center gap-1.5 text-xs font-medium">
+            <a href="?status=all{% if category_filter != 'all' %}&category={{ category_filter }}{% endif %}"
+               class="px-3 py-1.5 rounded-lg transition-colors {% if status_filter == 'all' %}bg-docker-600 text-white font-semibold{% else %}text-slate-300 hover:bg-slate-700/60{% endif %}">
+                Todas ({{ total_tasks }})
+            </a>
+            <a href="?status=pending{% if category_filter != 'all' %}&category={{ category_filter }}{% endif %}"
+               class="px-3 py-1.5 rounded-lg transition-colors {% if status_filter == 'pending' %}bg-amber-600 text-white font-semibold{% else %}text-slate-300 hover:bg-slate-700/60{% endif %}">
+                Pendentes ({{ pending_tasks }})
+            </a>
+            <a href="?status=in_progress{% if category_filter != 'all' %}&category={{ category_filter }}{% endif %}"
+               class="px-3 py-1.5 rounded-lg transition-colors {% if status_filter == 'in_progress' %}bg-sky-600 text-white font-semibold{% else %}text-slate-300 hover:bg-slate-700/60{% endif %}">
+                Em Andamento ({{ in_progress_tasks }})
+            </a>
+            <a href="?status=completed{% if category_filter != 'all' %}&category={{ category_filter }}{% endif %}"
+               class="px-3 py-1.5 rounded-lg transition-colors {% if status_filter == 'completed' %}bg-emerald-600 text-white font-semibold{% else %}text-slate-300 hover:bg-slate-700/60{% endif %}">
+                Concluídas ({{ completed_tasks }})
+            </a>
+        </div>
+
+        <!-- Category Dropdown Filter -->
+        <form method="get" class="flex items-center gap-2 text-xs">
+            {% if status_filter != 'all' %}
+                <input type="hidden" name="status" value="{{ status_filter }}">
+            {% endif %}
+            <label for="category" class="text-slate-400">Categoria:</label>
+            <select name="category" id="category" onchange="this.form.submit()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-docker-500">
+                <option value="all" {% if category_filter == 'all' %}selected{% endif %}>Todas Categorias</option>
+                {% for key, val in category_choices %}
+                    <option value="{{ key }}" {% if category_filter == key %}selected{% endif %}>{{ val }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <!-- Task Cards Grid -->
+    {% if tasks %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {% for task in tasks %}
+                <div class="bg-slate-800/70 border border-slate-700/70 rounded-2xl p-5 flex flex-col justify-between hover:border-slate-600 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 group">
+                    <div>
+                        <!-- Header: Category & Priority -->
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/50">
+                                {{ task.get_category_display }}
+                            </span>
+                            
+                            <!-- Priority Badge -->
+                            <span class="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md
+                                {% if task.priority == 'critical' %}bg-rose-500/20 text-rose-300 border border-rose-500/30
+                                {% elif task.priority == 'high' %}bg-orange-500/20 text-orange-300 border border-orange-500/30
+                                {% elif task.priority == 'medium' %}bg-sky-500/20 text-sky-300 border border-sky-500/30
+                                {% else %}bg-slate-500/20 text-slate-300 border border-slate-500/30{% endif %}">
+                                Prioridade {{ task.get_priority_display }}
+                            </span>
+                        </div>
+
+                        <!-- Title -->
+                        <h3 class="text-base font-bold text-white group-hover:text-docker-300 transition-colors">
+                            {{ task.title }}
+                        </h3>
+
+                        <!-- Description -->
+                        {% if task.description %}
+                            <p class="text-slate-400 text-xs sm:text-sm mt-2 line-clamp-3 leading-relaxed">
+                                {{ task.description }}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Footer: Status Switcher & Delete -->
+                    <div class="mt-5 pt-4 border-t border-slate-700/60 flex items-center justify-between text-xs">
+                        <!-- Status Form -->
+                        <form action="{% url 'task_update_status' task.id %}" method="post" class="flex items-center gap-1.5">
+                            {% csrf_token %}
+                            <span class="text-slate-400 mr-1">Status:</span>
+                            <select name="status" onchange="this.form.submit()" class="bg-slate-900 border border-slate-700 rounded-md px-2 py-1 text-xs font-medium
+                                {% if task.status == 'completed' %}text-emerald-400 border-emerald-500/40
+                                {% elif task.status == 'in_progress' %}text-sky-400 border-sky-500/40
+                                {% else %}text-amber-400 border-amber-500/40{% endif %} focus:outline-none">
+                                <option value="pending" {% if task.status == 'pending' %}selected{% endif %}>⏳ Pendente</option>
+                                <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>⚡ Em Andamento</option>
+                                <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>✅ Concluído</option>
+                            </select>
+                        </form>
+
+                        <!-- Delete Action -->
+                        <form action="{% url 'task_delete' task.id %}" method="post" onsubmit="return confirm('Excluir esta tarefa permanentemente?')">
+                            {% csrf_token %}
+                            <button type="submit" class="text-slate-500 hover:text-rose-400 p-1 rounded transition-colors" title="Excluir">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-16 bg-slate-800/30 rounded-2xl border border-dashed border-slate-700 p-8">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-docker-500/10 text-docker-400 flex items-center justify-center text-3xl mb-4">
+                🐳
+            </div>
+            <h3 class="text-lg font-bold text-white">Nenhuma tarefa encontrada</h3>
+            <p class="text-slate-400 text-sm max-w-sm mx-auto mt-1">
+                Comece criando uma tarefa para testar o backend Django conectado ao banco de dados SQLite/Postgres dentro do Docker!
+            </p>
+            <button onclick="document.getElementById('taskModal').classList.remove('hidden')" class="mt-4 inline-flex items-center gap-2 bg-docker-600 hover:bg-docker-500 text-white font-medium text-xs px-4 py-2 rounded-lg transition-colors">
+                + Criar Primeira Tarefa
+            </button>
+        </div>
+    {% endif %}
+
+</div>
+
+<!-- Modal: Criar Nova Tarefa -->
+<div id="taskModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative animate-scale-up">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <span>🐳</span> Nova Tarefa de Nuvem / Docker
+            </h3>
+            <button onclick="document.getElementById('taskModal').classList.add('hidden')" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
+        </div>
+
+        <form action="{% url 'task_create' %}" method="post" class="mt-5 space-y-4">
+            {% csrf_token %}
+
+            <div>
+                <label for="modal_title" class="block text-xs font-medium text-slate-300 mb-1">Título da Tarefa *</label>
+                <input type="text" name="title" id="modal_title" required placeholder="Ex: Construir imagem Docker com Dockerfile multi-stage" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-docker-500 focus:ring-1 focus:ring-docker-500">
+            </div>
+
+            <div>
+                <label for="modal_desc" class="block text-xs font-medium text-slate-300 mb-1">Descrição Detalhada</label>
+                <textarea name="description" id="modal_desc" rows="3" placeholder="Explicar os comandos executados, camadas e portas expostas..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-docker-500 focus:ring-1 focus:ring-docker-500"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label for="modal_category" class="block text-xs font-medium text-slate-300 mb-1">Categoria</label>
+                    <select name="category" id="modal_category" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-docker-500">
+                        {% for key, val in category_choices %}
+                            <option value="{{ key }}">{{ val }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label for="modal_priority" class="block text-xs font-medium text-slate-300 mb-1">Prioridade</label>
+                    <select name="priority" id="modal_priority" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-docker-500">
+                        {% for key, val in priority_choices %}
+                            <option value="{{ key }}" {% if key == 'medium' %}selected{% endif %}>{{ val }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label for="modal_status" class="block text-xs font-medium text-slate-300 mb-1">Status</label>
+                    <select name="status" id="modal_status" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-docker-500">
+                        {% for key, val in status_choices %}
+                            <option value="{{ key }}" {% if key == 'pending' %}selected{% endif %}>{{ val }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+                <button type="button" onclick="document.getElementById('taskModal').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-docker-600 hover:bg-docker-500 text-white shadow-lg shadow-docker-600/30 transition-all">
+                    Salvar Tarefa
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function fetchSystemApi() {
+        const box = document.getElementById('apiResponseBox');
+        const display = document.getElementById('apiJsonDisplay');
+        box.classList.remove('hidden');
+        display.textContent = 'Carregando diagnóstico do backend...';
+        
+        try {
+            const res = await fetch('/api/system-info/');
+            const data = await res.json();
+            display.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+            display.textContent = 'Erro ao consultar API: ' + err;
+        }
+    }
+</script>
+{% endblock %}
+

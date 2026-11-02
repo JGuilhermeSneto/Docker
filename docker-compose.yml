@@ -1,0 +1,30 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cloudpulse-backend:latest
+    container_name: cloudpulse_app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_DEBUG=False
+      - DJANGO_SECRET_KEY=sua-chave-secreta-de-producao-docker-cloud-2026
+      - ALLOWED_HOSTS=*
+      - APP_ENV=Produção Nuvem (Docker Compose)
+      - IN_DOCKER=true
+      - DATA_DIR=/app/data
+    volumes:
+      # Volume persistente para o banco de dados SQLite e uploads
+      - cloud_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/system-info/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  cloud_data:
+    driver: local

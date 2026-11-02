@@ -1,0 +1,140 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CloudPulse | Django & Docker{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        docker: {
+                            50: '#eef9ff',
+                            100: '#dcf2fe',
+                            200: '#b2e5fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        code, pre, .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-docker-500 selection:text-white">
+
+    <!-- Top Navigation Bar -->
+    <nav class="sticky top-0 z-50 backdrop-blur-md bg-slate-900/80 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Brand -->
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'index' %}" class="flex items-center space-x-3 group">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-docker-600 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-docker-500/20 group-hover:scale-105 transition-transform">
+                            <span class="text-2xl">🐳</span>
+                        </div>
+                        <div>
+                            <span class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-docker-200 bg-clip-text text-transparent">
+                                CloudPulse
+                            </span>
+                            <span class="text-xs block text-slate-400 font-medium -mt-1">
+                                Django + Docker Hub
+                            </span>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <a href="{% url 'index' %}" class="px-3 py-2 rounded-lg text-sm font-medium transition-colors {% if request.resolver_match.url_name == 'index' %}bg-slate-800 text-docker-400 border border-slate-700{% else %}text-slate-300 hover:text-white hover:bg-slate-800/50{% endif %}">
+                        📊 Dashboard & Tarefas
+                    </a>
+                    <a href="{% url 'theory' %}" class="px-3 py-2 rounded-lg text-sm font-medium transition-colors {% if request.resolver_match.url_name == 'theory' %}bg-slate-800 text-docker-400 border border-slate-700{% else %}text-slate-300 hover:text-white hover:bg-slate-800/50{% endif %}">
+                        📘 Teoria Docker & VMs
+                    </a>
+                    <a href="/admin/" target="_blank" class="hidden sm:inline-flex px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors">
+                        ⚙️ Django Admin
+                    </a>
+                </div>
+
+                <!-- Environment Pill -->
+                <div class="hidden md:flex items-center space-x-2 bg-slate-800/80 border border-slate-700/80 px-3 py-1.5 rounded-full text-xs">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full {% if system_info.is_docker %}bg-emerald-400{% else %}bg-amber-400{% endif %} opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 {% if system_info.is_docker %}bg-emerald-500{% else %}bg-amber-500{% endif %}"></span>
+                    </span>
+                    <span class="font-mono text-slate-300">
+                        {% if system_info.is_docker %}
+                            Contêiner: <strong class="text-emerald-400">{{ system_info.hostname|slice:":12" }}</strong>
+                        {% else %}
+                            Host Local: <strong class="text-amber-400">{{ system_info.hostname }}</strong>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-3 px-4 py-3 rounded-xl border flex items-center justify-between text-sm shadow-md animate-fade-in
+                    {% if message.tags == 'error' %}bg-rose-950/40 border-rose-800/60 text-rose-200
+                    {% elif message.tags == 'success' %}bg-emerald-950/40 border-emerald-800/60 text-emerald-200
+                    {% else %}bg-sky-950/40 border-sky-800/60 text-sky-200{% endif %}">
+                    <div class="flex items-center space-x-2">
+                        <span>
+                            {% if message.tags == 'error' %}⚠️
+                            {% elif message.tags == 'success' %}✅
+                            {% else %}ℹ️{% endif %}
+                        </span>
+                        <span>{{ message }}</span>
+                    </div>
+                    <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white">&times;</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-950/60 py-6 mt-12 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+                Desenvolvimento Web para Nuvens &middot; <strong>Trabalho de Docker & Contêineres</strong>
+            </div>
+            <div class="font-mono text-slate-400">
+                Stack: Python {{ system_info.python_version }} | Django 6 | Tailwind | Docker
+            </div>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

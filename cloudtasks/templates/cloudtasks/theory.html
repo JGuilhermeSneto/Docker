@@ -1,0 +1,206 @@
+{% extends 'cloudtasks/base.html' %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-10">
+
+    <!-- Header -->
+    <div class="border-b border-slate-800 pb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-docker-500/10 text-docker-400 border border-docker-500/20 mb-3">
+            📚 Fundamentação Teórica Acadêmica
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Docker, Contêineres & Computação em Nuvem
+        </h1>
+        <p class="text-slate-400 mt-2 text-sm sm:text-base leading-relaxed">
+            Relatório conceitual sobre arquitetura de contêineres, ciclo de vida de imagens, isolamento no nível do kernel Linux e comparação arquitetural com Máquinas Virtuais (VMs).
+        </p>
+    </div>
+
+    <!-- Section 1: Conceito de Contêineres -->
+    <div class="bg-slate-850 bg-slate-800/40 border border-slate-700/70 rounded-2xl p-6 sm:p-8 space-y-4">
+        <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-docker-500/20 text-docker-400 flex items-center justify-center font-bold text-sm">01</span>
+            <h2 class="text-xl font-bold text-white">O que são Contêineres?</h2>
+        </div>
+        <p class="text-slate-300 text-sm leading-relaxed">
+            Um <strong>contêiner</strong> é uma unidade padronizada de software que empacota o código de uma aplicação e todas as suas dependências (binários, bibliotecas, arquivos de configuração e tempo de execução), garantindo que ela seja executada de maneira rápida, confiável e idêntica em qualquer ambiente de computação.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+                <h4 class="text-docker-300 font-semibold text-xs uppercase tracking-wider mb-1">Mecanismo Linux Namespaces</h4>
+                <p class="text-slate-400 text-xs leading-relaxed">
+                    Responsável pelo <strong>isolamento de visão</strong>: faz o processo dentro do contêiner acreditar que possui sua própria tabela de processos (<code class="text-emerald-400">PID</code>), interfaces de rede (<code class="text-emerald-400">NET</code>), pontos de montagem de arquivos (<code class="text-emerald-400">MNT</code>), hostname (<code class="text-emerald-400">UTS</code>) e comunicação inter-processos (<code class="text-emerald-400">IPC</code>).
+                </p>
+            </div>
+            <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+                <h4 class="text-cyan-300 font-semibold text-xs uppercase tracking-wider mb-1">Control Groups (cgroups)</h4>
+                <p class="text-slate-400 text-xs leading-relaxed">
+                    Responsável pela <strong>medição e limitação de recursos de hardware</strong>: controla quanta memória RAM, núcleos de CPU, I/O de disco e largura de banda de rede cada contêiner pode consumir, impedindo que um processo monopolize o servidor.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 2: Imagens Docker e Camadas -->
+    <div class="bg-slate-850 bg-slate-800/40 border border-slate-700/70 rounded-2xl p-6 sm:p-8 space-y-4">
+        <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-docker-500/20 text-docker-400 flex items-center justify-center font-bold text-sm">02</span>
+            <h2 class="text-xl font-bold text-white">Imagens Docker & Camadas (Layers)</h2>
+        </div>
+        <p class="text-slate-300 text-sm leading-relaxed">
+            Uma <strong>Imagem Docker</strong> é um modelo somente-leitura (<em>read-only snapshot</em>) composto por várias camadas sobrepostas que utilizam sistemas de arquivos unificados (como <em>OverlayFS</em>). Quando um contêiner é iniciado, o Docker adiciona uma camada final fina de leitura e escrita (<em>Container Layer</em>).
+        </p>
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs text-slate-300 space-y-2">
+            <div class="p-2 rounded bg-emerald-950/40 border border-emerald-800/40 text-emerald-300 flex justify-between">
+                <span>[RW] Camada do Contêiner (Container Layer) &mdash; Leitura e Escrita efêmera</span>
+                <span class="text-[10px] text-emerald-400">Execução</span>
+            </div>
+            <div class="p-2 rounded bg-slate-900 border border-slate-800 text-slate-300 flex justify-between">
+                <span>[RO] Camada 4: CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]</span>
+                <span class="text-[10px] text-slate-500">Dockerfile</span>
+            </div>
+            <div class="p-2 rounded bg-slate-900 border border-slate-800 text-slate-300 flex justify-between">
+                <span>[RO] Camada 3: COPY . /app (Código-fonte Django)</span>
+                <span class="text-[10px] text-slate-500">Dockerfile</span>
+            </div>
+            <div class="p-2 rounded bg-slate-900 border border-slate-800 text-slate-300 flex justify-between">
+                <span>[RO] Camada 2: RUN pip install -r requirements.txt</span>
+                <span class="text-[10px] text-slate-500">Cacheável</span>
+            </div>
+            <div class="p-2 rounded bg-slate-900 border border-slate-800 text-slate-400 flex justify-between">
+                <span>[RO] Camada 1: FROM python:3.11-slim (Imagem Base Linux Debian)</span>
+                <span class="text-[10px] text-slate-500">Base</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 3: O que é o Dockerfile -->
+    <div class="bg-slate-850 bg-slate-800/40 border border-slate-700/70 rounded-2xl p-6 sm:p-8 space-y-4">
+        <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-docker-500/20 text-docker-400 flex items-center justify-center font-bold text-sm">03</span>
+            <h2 class="text-xl font-bold text-white">O que é o Dockerfile e suas Diretivas</h2>
+        </div>
+        <p class="text-slate-300 text-sm leading-relaxed">
+            O <strong>Dockerfile</strong> é uma receita declarativa em texto contendo as instruções sequenciais que o Docker utiliza para construir automaticamente a imagem do contêiner.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                <code class="text-docker-400 font-bold block mb-1">FROM</code>
+                Define a imagem base de partida (ex: <code class="text-slate-300">python:3.11-slim</code>).
+            </div>
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                <code class="text-docker-400 font-bold block mb-1">WORKDIR</code>
+                Define o diretório de trabalho padrão dentro do contêiner para os próximos comandos.
+            </div>
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                <code class="text-docker-400 font-bold block mb-1">COPY</code>
+                Copia arquivos da máquina do desenvolvedor (contexto de build) para o contêiner.
+            </div>
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                <code class="text-docker-400 font-bold block mb-1">RUN</code>
+                Executa comandos durante o build para gerar novas camadas (ex: instalação de pacotes).
+            </div>
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                <code class="text-docker-400 font-bold block mb-1">EXPOSE</code>
+                Documenta a porta de rede que a aplicação interna do contêiner escuta (ex: 8000).
+            </div>
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                <code class="text-docker-400 font-bold block mb-1">CMD / ENTRYPOINT</code>
+                Instrução executada no momento em que o contêiner é iniciado para rodar o processo principal.
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 4: Isolamento e Portabilidade -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-slate-850 bg-slate-800/40 border border-slate-700/70 rounded-2xl p-6 space-y-3">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <span>🛡️</span> Isolamento
+            </h3>
+            <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                Cada contêiner opera em um ambiente confinado. Falhas ou crashes dentro de um contêiner não afetam o sistema hospedeiro ou outros contêineres vizinhos. O contêiner possui seu próprio sistema de arquivos em raiz virtual (<code class="text-docker-300">chroot</code>), rede privativa com IP próprio e tabela de processos isolada.
+            </p>
+        </div>
+
+        <div class="bg-slate-850 bg-slate-800/40 border border-slate-700/70 rounded-2xl p-6 space-y-3">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <span>🌐</span> Portabilidade na Nuvem
+            </h3>
+            <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                Resolve o clássico dilema: <em>"Na minha máquina funciona, mas em produção não"</em>. Como o contêiner empacota o sistema operacional base, a versão exata do Python, as bibliotecas e as configurações, ele executa com comportamento 100% idêntico no Windows, Linux, macOS, AWS, Azure ou Google Cloud.
+            </p>
+        </div>
+    </div>
+
+    <!-- Section 5: Comparação Completa: Contêineres vs Máquinas Virtuais -->
+    <div class="bg-slate-850 bg-slate-800/40 border border-slate-700/70 rounded-2xl p-6 sm:p-8 space-y-6">
+        <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-docker-500/20 text-docker-400 flex items-center justify-center font-bold text-sm">05</span>
+            <h2 class="text-xl font-bold text-white">Comparativo: Contêineres vs Máquinas Virtuais (VMs)</h2>
+        </div>
+
+        <p class="text-slate-300 text-sm leading-relaxed">
+            Enquanto as Máquinas Virtuais virtualizam o <strong>hardware físico</strong> (necessitando de um sistema operacional convidado completo e um Hypervisor), os contêineres virtualizam apenas o <strong>sistema operacional</strong>, compartilhando diretamente o mesmo Kernel da máquina hospedeira.
+        </p>
+
+        <!-- Comparison Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-700 text-slate-400">
+                        <th class="py-3 px-4 font-semibold">Critério</th>
+                        <th class="py-3 px-4 font-semibold text-docker-400">🐳 Contêineres Docker</th>
+                        <th class="py-3 px-4 font-semibold text-amber-400">🖥️ Máquinas Virtuais (VMs)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800 text-slate-300">
+                    <tr class="hover:bg-slate-800/30">
+                        <td class="py-3 px-4 font-medium text-white">Abstração / Nível</td>
+                        <td class="py-3 px-4">Nível de Sistema Operacional (Kernel Compartilhado)</td>
+                        <td class="py-3 px-4">Nível de Hardware (Hypervisor: KVM, ESXi, VirtualBox)</td>
+                    </tr>
+                    <tr class="hover:bg-slate-800/30">
+                        <td class="py-3 px-4 font-medium text-white">Sistema Operacional</td>
+                        <td class="py-3 px-4 text-emerald-400">Não requer SO Convidado (Guest OS)</td>
+                        <td class="py-3 px-4 text-rose-300">Requer SO Completo em cada VM (GBs de disco)</td>
+                    </tr>
+                    <tr class="hover:bg-slate-800/30">
+                        <td class="py-3 px-4 font-medium text-white">Tempo de Inicialização</td>
+                        <td class="py-3 px-4 text-emerald-400">Milissegundos a poucos segundos</td>
+                        <td class="py-3 px-4">Minutos (boot completo do sistema operacional)</td>
+                    </tr>
+                    <tr class="hover:bg-slate-800/30">
+                        <td class="py-3 px-4 font-medium text-white">Tamanho da Imagem</td>
+                        <td class="py-3 px-4 text-emerald-400">Muito leve: de dezenas a centenas de MBs</td>
+                        <td class="py-3 px-4">Pesado: vários Gigabytes (10 GB a 50 GB+)</td>
+                    </tr>
+                    <tr class="hover:bg-slate-800/30">
+                        <td class="py-3 px-4 font-medium text-white">Consumo de Recursos (Overhead)</td>
+                        <td class="py-3 px-4 text-emerald-400">Mínimo / Quase nulo (processos nativos)</td>
+                        <td class="py-3 px-4 text-amber-300">Alto (duplicação de kernels, drivers e memória)</td>
+                    </tr>
+                    <tr class="hover:bg-slate-800/30">
+                        <td class="py-3 px-4 font-medium text-white">Densidade de Execução</td>
+                        <td class="py-3 px-4 text-emerald-400">Centenas de contêineres no mesmo servidor</td>
+                        <td class="py-3 px-4">Poucas dezenas de VMs por servidor físico</td>
+                    </tr>
+                    <tr class="hover:bg-slate-800/30">
+                        <td class="py-3 px-4 font-medium text-white">Nível de Isolamento</td>
+                        <td class="py-3 px-4">Isolamento lógico no nível de processos</td>
+                        <td class="py-3 px-4 text-emerald-400">Isolamento forte no nível de hardware</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Back to Dashboard -->
+    <div class="text-center pt-4">
+        <a href="{% url 'index' %}" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-docker-400 border border-slate-700 px-6 py-3 rounded-xl font-semibold text-sm transition-all">
+            &larr; Voltar para o Dashboard Interativo
+        </a>
+    </div>
+
+</div>
+{% endblock %}
+
